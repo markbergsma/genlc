@@ -47,7 +47,9 @@ More usage information:
     $ genlc --help
 
 ## Installation ##
-For now this is very experimental code, best pip3 install from the repository URL. I intend to publish it to PyPi once things are a bit more stable.
+For now this is very experimental code, best pip3 install from the repository URL if you have pip 19.0 or newer. I intend to publish it to PyPi once things are a bit more stable.
+
+    $ python3 -m pip install git+https://github.com/markbergsma/genlc#egg=genlc
 
 genlc depends on the libusb/libhid libraries to access the GLM USB adapter, and those should be installed separately. Best use the `libusb0` backend of `libusb`, although `hidraw0` could also work (untested). To install on e.g. a Debian-derived system, this should work:
 
