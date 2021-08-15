@@ -1,0 +1,15 @@
+{
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintArgs": ["--c-extension-no-member"],
+  "python.linting.enabled": true,
+  "python.formatting.provider": "black",
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.codeActionsOnSave": {"source.organizeImports": true},
+  "files.trimTrailingWhitespace": true,
+  "python.linting.pylintUseMinimalCheckers": false,
+  "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/src"},
+  "terminal.integrated.env.osx": {"PYTHONPATH": "${workspaceFolder}/src"},
+  "terminal.integrated.env.windows": {"PYTHONPATH": "${workspaceFolder}/src"},
+}

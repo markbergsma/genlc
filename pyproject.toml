@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "genlc"
+version = "0.1.0"
+description = "Unofficial module for controlling Genelec SAM loudspeakers"
+authors = ["Mark Bergsma <mark@wikked.net>"]
+license = "GPLv3"
+readme = "README.md"
+homepage = "https://github.com/markbergsma/genlc"
+repository = "https://github.com/markbergsma/genlc"
+keywords = ["glm", "genelec sam"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+hid = "^1.0.4"
+libscrc = "^1.7.1"
+click = "^8.0.1"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.9.3"
+black = {version = "^21.6b0", allow-prereleases = true}
+pytest = "^6.2.4"
+pytest-mock = "^3.6.1"
+coverage = {extras = ["toml"], version = "^5.5"}
+pytest-cov = "^2.12.1"
+flake8 = "^3.9.2"
+mypy = "^0.910"
+
+[tool.poetry.scripts]
+genlc = "genlc.cli:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["genlc"]
+
+[tool.coverage.report]
+show_missing = true
