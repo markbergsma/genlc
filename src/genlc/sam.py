@@ -1,7 +1,7 @@
 # genlm/sam.py
 
 import logging
-from typing import Literal, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 from . import const, util
 from .gnet import GNetException, GNetMessage, GNetTimeoutException
@@ -282,9 +282,7 @@ class SAMMonitor(BaseDevice):
         self,
         value: int = 0,
         mute: Optional[bool] = None,
-        led_color: Optional[
-            Union[int, Literal["green", "red", "yellow", "off"]]
-        ] = None,
+        led_color: Optional[Union[int, str]] = None,
         led_pulsing: Optional[bool] = None,
         invert_led_enable: Optional[bool] = None,
     ) -> None:
