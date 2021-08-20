@@ -1,5 +1,7 @@
 # cli.py
 
+# TODO: More uniformity/consistency in cli commands and help messages
+
 import logging
 import time
 from typing import Sequence, Set
@@ -104,7 +106,7 @@ def discover():
         click.echo(f"\tbar code {usb_adapter.query_barcode()}")
         click.echo(f"\tmicrophone serial #{usb_adapter.query_mic_serial()}")
     except gnet.GNetTimeoutException as te:
-        raise click.ClickException("Timeout communicating with the GLM adapter: {te}")
+        raise click.ClickException(f"Timeout communicating with the GLM adapter: {te}")
 
     for monitor in sg.discover_monitors(all=True):
         if monitor.address == 1:
@@ -259,3 +261,23 @@ def bypass(monitors, **kwargs):
             f"{({k: v for (k, v) in kwargs.items() if v is not None})}"
         )
         monitor.bypass(**kwargs)
+
+
+@main.command()
+@MONITORS_OPTION
+@click.option(
+    "--xo-freq",
+    type=click.INT,
+    required=False,
+    default=const.DEFAULT_XO_FREQ,
+    help="Crossover frequency (Hz)",
+)
+def bass_manage(monitors, xo_freq: int):
+    """Configure bass management"""
+
+    for monitor in validated_monitors(monitors):
+        if xo_freq is not None:
+            click.echo(
+                f"Setting bass management crossover frequency of monitor {monitor} to {xo_freq} Hz"
+            )
+            monitor.bass_manage_xo(xo_freq)

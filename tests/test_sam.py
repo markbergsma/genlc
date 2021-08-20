@@ -78,6 +78,18 @@ def test_SAMMonitor_poll(samgroup):
     )
 
 
+@pytest.mark.parametrize("freq", [85, 100])
+def test_SAMMonitor_bass_manage_xo(samgroup, freq):
+    """Test SAMMonitor.xo with common parameters"""
+
+    sm = sam.SAMMonitor(0x02, samgroup)
+    samgroup.transport._read.return_value = b"\x01\t\x5D\xE7\x7E"
+    sm.bass_manage_xo(freq)
+    samgroup.transport.send.assert_called_once_with(
+        gnet.GNetMessage(0x02, const.CID_BASS_MANAGE_XO, freq.to_bytes(2, "big"))
+    )
+
+
 def test_SAMGroup_init(mock_transport):
     """Tests the GLM constructor"""
 

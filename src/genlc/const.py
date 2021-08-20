@@ -61,8 +61,8 @@ CID_PROTECTION: int
 CID_SOFTWARE_QUERY2: int = 0x39
 CID_ISS: int  # might be 0x3A, see CID_WAKEUP
 CID_BASS_MANAGE_XO: int = 0x3B
-CID_BASS_AFILTER: int  # might be 0x3C
-CID_BASS_BYPASS: int  # might be 0x3D
+CID_BASS_AFILTER: int = 0x3C  # FIXME: guesswork
+CID_BASS_BYPASS: int = 0x3D  # FIXME: guesswork
 CID_LFE_GAIN: int = 0x3E
 CID_DSP_PAR: int
 CID_SELECT_AUDIO_SOURCE: int = 0x40  # FIXME: guesswork
@@ -96,3 +96,6 @@ LED_GREEN = 0
 LED_RED = 1
 LED_OFF = 2
 LED_YELLOW = 3
+
+# Defaults
+DEFAULT_XO_FREQ = 85

@@ -326,3 +326,18 @@ class SAMMonitor(BaseDevice):
         self.group.transport.send_receive(
             GNetMessage(self.address, const.CID_DIGISUM_GAIN, data)
         )
+
+    def bass_manage_xo(self, freq: int) -> None:
+        """Set the bass management crossover frequency
+
+        Arguments:
+            freq: crossover frequency in Hz
+        """
+
+        self.group.transport.send_receive(
+            GNetMessage(
+                self.address,
+                const.CID_BASS_MANAGE_XO,
+                freq.to_bytes(2, byteorder="big"),
+            )
+        )
