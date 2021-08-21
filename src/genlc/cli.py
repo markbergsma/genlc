@@ -25,13 +25,16 @@ usb_adapter: sam.USBAdapter = None
 
 
 def validated_monitors(
-    monitors: Set[sam.BaseDevice], allow_address_1: bool = False
+    monitors: Set[sam.BaseDevice],
+    allow_address_1: bool = False,
+    default_all: bool = True,
 ) -> Sequence[sam.BaseDevice]:
     """Return a validated sequence of monitors
 
     Args:
         monitors: Set of monitor addresses, as parsed by MonitorListParamType
         allow_address_1: Include address 1 (the USB adapter) as a valid monitor target
+        default_all: Whether monitor == None implies returning all discovered monitors
 
     Return:
         A sequence of BaseDevice instances that were both discovered and specified
@@ -46,6 +49,9 @@ def validated_monitors(
         for device in sg.discover_monitors(all=True)
         if device.address != 1 or allow_address_1
     }
+    if monitors is None and default_all:
+        return list(discovered_monitors.values())
+
     try:
         return [discovered_monitors[addr] for addr in monitors]
     except KeyError:
