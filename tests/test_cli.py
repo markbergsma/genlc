@@ -38,15 +38,17 @@ def test_monitors_option(runner, mocker, mock_samgroup):
     mocker.patch("genlc.cli.validated_monitors")
 
     result = runner.invoke(
-        genlc.cli.main, ["--monitors=2,3", "poll"], catch_exceptions=False
+        genlc.cli.main, ["--monitors=2,#12345678", "poll"], catch_exceptions=False
     )
     # Poll should have been passed the --monitors value from the group command
-    genlc.cli.validated_monitors.assert_called_with({2, 3}, allow_address_1=True)
+    genlc.cli.validated_monitors.assert_called_with(
+        {2, "#12345678"}, allow_address_1=True
+    )
     assert result.exit_code == 0
 
     result = runner.invoke(
         genlc.cli.main,
-        ["--monitors=2,3", "poll", "--monitors=4"],
+        ["--monitors=2,#12345678", "poll", "--monitors=4"],
         catch_exceptions=False,
     )
     # Poll should have its own --monitors value passed

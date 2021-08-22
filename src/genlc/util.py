@@ -7,6 +7,7 @@ Utility classes and functions for genlc
 
 import logging
 import math
+from typing import Set, Union
 
 import click
 
@@ -68,19 +69,20 @@ class VolumeParamType(click.ParamType):
 class MonitorListParamType(click.ParamType):
     """Click MonitorList parameter type
 
-    This class parses a comma separated list of ints (monitor addresses
-    and converts it into a frozenset
+    This class parses a comma separated list of ints
+    (monitor addresses/#serials) and converts it into a set
     """
 
     name = "monitorlist"
 
-    def convert(self, value, param, ctx):
+    def convert(self, value: Union[str, Set], param, ctx) -> Set[Union[int, str]]:
         if isinstance(value, set):
             return value
 
         try:
-            addresses = [int(num) for num in value.split(",")]
+            parts = (part.strip() for part in value.split(","))
+            return {
+                id if id[0] == "#" and id[1:].isnumeric() else int(id) for id in parts
+            }
         except ValueError:
             self.fail(f"{value!r} is not a valid monitor list", param, ctx)
-        else:
-            return set(addresses)

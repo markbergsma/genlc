@@ -4,7 +4,7 @@
 
 import logging
 import time
-from typing import Sequence, Set
+from typing import Optional, Sequence, Set, Union
 
 import click
 import hid
@@ -33,7 +33,7 @@ MONITORS_OPTION = click.option(
     "-m",
     type=util.MonitorListParamType(),
     default=monitors_parent_values,
-    help="SAM monitor addresses (comma separated)",
+    help="SAM monitor addresses/#serials (comma separated)",
 )
 
 sg: sam.SAMGroup = None
@@ -41,18 +41,19 @@ usb_adapter: sam.USBAdapter = None
 
 
 def validated_monitors(
-    monitors: Set[sam.BaseDevice],
+    monitors: Optional[Set[Union[int, str]]],
     allow_address_1: bool = False,
     default_all: bool = True,
 ) -> Sequence[sam.BaseDevice]:
     """Return a validated sequence of monitors
 
     Args:
-        monitors: Set of monitor addresses, as parsed by MonitorListParamType
+        monitors: Set of monitor addresses (ints) or #serials (strings), as parsed by
+            MonitorListParamType
         allow_address_1: Include address 1 (the USB adapter) as a valid monitor target
         default_all: Whether monitor == None implies returning all discovered monitors
 
-    Return:
+    Returns:
         A sequence of BaseDevice instances that were both discovered and specified
 
     Raises:
@@ -60,19 +61,23 @@ def validated_monitors(
     """
 
     sg = click.get_current_context().obj["samgroup"]
-    discovered_monitors = {
-        device.address: device
+    discovered_monitors = [
+        device
         for device in sg.discover_monitors(all=True)
         if device.address != 1 or allow_address_1
-    }
+    ]
     if monitors is None and default_all:
-        return list(discovered_monitors.values())
+        return discovered_monitors
 
     try:
-        return [discovered_monitors[addr] for addr in monitors]
+        return [
+            monitor
+            for monitor in discovered_monitors
+            if monitor.address in monitors or str(monitor.serial) in monitors
+        ]
     except KeyError:
         raise click.BadParameter(
-            f"Monitor list {monitors} contains unassigned addresses "
+            f"Monitor list {monitors} contains unassigned addresses/#serials"
             f"(monitors that were not discovered): {monitors.difference(discovered_monitors)}"
         )
 
@@ -100,7 +105,7 @@ def discover_monitors():
     "-m",
     type=util.MonitorListParamType(),
     default=monitors_parent_values,
-    help="default SAM monitor addresses (comma separated)",
+    help="default SAM monitor addresses/#serials (comma separated)",
 )
 @click.pass_context
 def main(ctx, debug, monitors):
