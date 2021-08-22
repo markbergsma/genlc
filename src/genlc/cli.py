@@ -12,11 +12,27 @@ import hid
 from genlc import __version__, const, gnet, sam, transport, util
 from genlc.gnet import GNetTimeoutException
 
+
+def monitors_parent_values():
+    """Provides a default value for the --monitors option,
+    by looking up if values were provided to the parent command where possible
+    """
+
+    try:
+        parent_ctx = click.get_current_context().parent
+        if parent_ctx and parent_ctx.default_map:
+            return parent_ctx.default_map["monitors"]
+    except (KeyError,):
+        pass
+    return None
+
+
 VOLUME = util.VolumeParamType()
 MONITORS_OPTION = click.option(
     "--monitors",
     "-m",
     type=util.MonitorListParamType(),
+    default=monitors_parent_values,
     help="SAM monitor addresses (comma separated)",
 )
 
@@ -79,8 +95,15 @@ def discover_monitors():
 @click.group(chain=True)
 @click.version_option(version=__version__)
 @click.option("--debug/--no-debug", default=False)
+@click.option(
+    "--monitors",
+    "-m",
+    type=util.MonitorListParamType(),
+    default=monitors_parent_values,
+    help="default SAM monitor addresses (comma separated)",
+)
 @click.pass_context
-def main(ctx, debug):
+def main(ctx, debug, monitors):
     """Allows control of a Genelec monitor group or individual SAM monitors"""
 
     global sg, usb_adapter
@@ -93,6 +116,10 @@ def main(ctx, debug):
     ctx.ensure_object(dict)
     ctx.obj["samgroup"] = sg
     ctx.with_resource(sg.transport.adapter)
+
+    # If the monitors option is provided, set it as the default value for all commands
+    if monitors:
+        ctx.default_map = {"monitors": monitors}
 
 
 @main.command()
@@ -150,19 +177,19 @@ def set_volume(volume: float):
 
 
 @main.command()
+@MONITORS_OPTION
 @click.option("--count", type=click.INT, default=1, help="Poll INTEGER times")
 @click.option("--continuous", is_flag=True, default=False, help="Continuous polling")
 @click.option(
     "--interval", type=click.FLOAT, default=1.0, help="Repeat every FLOAT seconds"
 )
-def poll(count, continuous, interval):
+def poll(monitors, count, continuous, interval):
     """Poll parameters of SAM monitors"""
-    discover_monitors()
-    # Poll the monitors
-    monitors = sg.devices.values()
+
+    poll_monitors = validated_monitors(monitors, allow_address_1=True)
     while continuous or count > 0:
         count -= 1
-        for monitor in monitors:
+        for monitor in poll_monitors:
             try:
                 monitor.poll()
             except GNetTimeoutException:
