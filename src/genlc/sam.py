@@ -126,8 +126,11 @@ class SAMGroup:
 class BaseDevice:
     """Base class for managing a Gnet/GLM/SAM device"""
 
-    def __init__(self, address: int, group: SAMGroup = None) -> None:
+    def __init__(
+        self, address: int, group: SAMGroup = None, serial: int = None
+    ) -> None:
         self.address: int = address
+        self.serial: int = serial
         self.group: SAMGroup = group
         self.poll_fields = {}
 
@@ -180,8 +183,13 @@ class BaseDevice:
 class USBAdapter(BaseDevice):
     """Class for communicating with the  USB adapter itself"""
 
-    def __init__(self, glm: SAMGroup = None):
-        super().__init__(0x01, glm)
+    def __init__(self, glm: SAMGroup = None, serial: int = None):
+        super().__init__(0x01, glm, serial)
+        if self.serial is None:
+            try:
+                self.serial = int(self.group.transport.adapter.serial, base=16)
+            except:
+                pass
 
     def query_mic_serial(self) -> None:
         msg = GNetMessage(self.address, const.CID_MIC_SERIAL, b"\x82\x44")
@@ -227,8 +235,7 @@ class SAMMonitor(BaseDevice):
     """Class for managing a single SAM monitor / subwoofer"""
 
     def __init__(self, address: int, glm: SAMGroup = None, serial: int = None) -> None:
-        self.serial = serial
-        super().__init__(address, glm)
+        super().__init__(address, glm, serial)
 
     def poll(self) -> dict:
         """

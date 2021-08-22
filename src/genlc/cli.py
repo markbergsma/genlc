@@ -140,6 +140,7 @@ def discover():
     )
     try:
         click.echo(f"[1] {usb_adapter.query_hardware()[0]}")
+        click.echo(f"\tserial #{usb_adapter.serial}")
         click.echo(f"\tsoftware {usb_adapter.query_software()}")
         click.echo(f"\tbar code {usb_adapter.query_barcode()}")
         click.echo(f"\tmicrophone serial #{usb_adapter.query_mic_serial()}")
