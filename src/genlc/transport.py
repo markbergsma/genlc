@@ -112,8 +112,8 @@ class USBTransport(BaseTransport):
         # Do PPP stuffing first
         msg = self.escape(bytes(message))
 
-        # Prefix the message with 0x80 + len(message) as the first byte
-        payload = bytes((0x80 + len(msg),)) + msg
+        # Prefix the message with a 0 byte, and 0x80 + len(message)
+        payload = bytes((0, 0x80 + len(msg))) + msg
         self._write(payload)
 
     def receive(self, parse: bool = True) -> GNetResponseMessage:
