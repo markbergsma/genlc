@@ -178,6 +178,8 @@ def discover():
 def set_volume(volume: float):
     """Set volume for all GLM devices"""
 
+    # Playback appears to pause for ~1s for some reason, if we don't discover monitors first
+    discover_monitors()
     click.echo(f"Setting volume to {volume:.2f} dB")
     sg.set_volume_glm(volume)
 
