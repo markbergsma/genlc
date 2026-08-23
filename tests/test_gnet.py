@@ -16,7 +16,7 @@ def test_GNetMessage_init():
     assert gnet_message.msg is None
 
     gnet_message = gnet.GNetMessage(0x02, 0x08)
-    assert gnet_message.msg == b"\x02\x08\x18\x95\x7E"
+    assert gnet_message.msg == b"\x02\x08\x18\x95"
 
 
 def test_GNetMessage_construct():
@@ -24,11 +24,11 @@ def test_GNetMessage_construct():
 
     gnet_message = gnet.GNetMessage(0x02, 0x08)
     assert gnet_message.checksum == libscrc.gsm16(b"\x02\x08")
-    assert gnet_message.msg == b"\x02\x08\x18\x95\x7E"
+    assert gnet_message.msg == b"\x02\x08\x18\x95"
 
     gnet_message = gnet.GNetMessage(0xFF, 0x04, b"ab")
     assert gnet_message.checksum == libscrc.gsm16(b"\xFF\x04ab")
-    assert gnet_message.msg == b"\xFF\x04ab\x1Cc\x7E"
+    assert gnet_message.msg == b"\xFF\x04ab\x1Cc"
 
 
 def test_GNetResponseMessage_parse():
@@ -36,12 +36,12 @@ def test_GNetResponseMessage_parse():
 
     gnrm = gnet.GNetResponseMessage()
     payload = bytes(range(59))
-    gnrm.msg = bytearray(b"\x01\x09" + payload + b"\x00\x00\x7E")
+    gnrm.msg = bytearray(b"\x01\x09" + payload + b"\x00\x00")
     with pytest.raises(gnet.GNetException):
         gnrm.parse()
 
-    # Now let's put a correct CRC for bytes(range(64)) and try again
-    gnrm.msg[-3:-1] = b"\x61\xCB"
+    # Now let's put a correct CRC for bytes(range(63)) and try again
+    gnrm.msg[-2:] = b"\x61\xCB"
     gnrm.parse()
     assert gnrm.response_code == const.GNET_ACK
     assert payload == gnrm.response
@@ -49,4 +49,12 @@ def test_GNetResponseMessage_parse():
     # Verify whether a timeout throws an exception
     gnrm.msg[1] = const.GNET_TIMEOUT
     with pytest.raises(gnet.GNetTimeoutException):
+        gnrm.parse()
+
+
+def test_GNetResponseMessage_parse_short_message():
+    """Tests truncated response frames raise a controlled exception"""
+
+    gnrm = gnet.GNetResponseMessage(bytearray(b"\x01"))
+    with pytest.raises(gnet.GNetException):
         gnrm.parse()

@@ -35,12 +35,12 @@ class GNetMessage:
     with little processing.
 
     Packet format appears to be as follows:
-    +---------------+---------------+---------------+---------------+---------------+---------------+
-    |   00 ... 07   |   08 ... 15   |  16 ... N-1   |   N ... N+7   | N+8 ... N+15  | N+16 ... N+23 |
-    +---------------+---------------+---------------+---------------+---------------+---------------+
-    | address (RID) | command (CID) |     data      |     checksum (CRC16/GSM)      |  terminator   |
-    |               |               |  (optional)   |     of payload (=)            |     (0x7E)    |
-    +===============+===============+===============+---------------+---------------+---------------+
+    +---------------+---------------+---------------+---------------+---------------+
+    |   00 ... 07   |   08 ... 15   |  16 ... N-1   |   N ... N+7   | N+8 ... N+15  |
+    +---------------+---------------+---------------+---------------+---------------+
+    | address (RID) | command (CID) |     data      |     checksum (CRC16/GSM)      |
+    |               |               |  (optional)   |     of payload (=)            |
+    +===============+===============+===============+---------------+---------------+
 
     Fields:
 
@@ -61,8 +61,8 @@ class GNetMessage:
         CRC16/GSM checksum of the message, starting with the address byte, up to
         and including the data bytes
 
-    - terminator
-        Terminator byte, always 0x7E
+    Transport-specific framing bytes (for example USB/RS485 terminators) are
+    handled by the transport layer and are not part of this message payload.
     """
 
     def __init__(
@@ -103,13 +103,15 @@ class GNetMessage:
         )
 
     def construct(self) -> None:
-        """Constructs the packet into bytearray msg from the individual field variables"""
+        """Constructs the packet into bytearray msg from the individual field variables.
+
+        The transport layer adds/removes its own wire-terminator; this message object
+        contains the normalized GNet payload only: address + command + data + CRC16.
+        """
 
         self.msg = bytearray((self.address, self.command)) + self.data
         self.create_checksum()
         self.msg += self.checksum.to_bytes(2, byteorder="big")
-
-        self.msg += bytes([const.GNET_TERM])
 
     def create_checksum(self) -> int:
         """
@@ -139,27 +141,32 @@ class GNetResponseMessage:
         self.response: Optional[bytearray] = None
 
     def parse(self) -> None:
-        """Parses the response message in self.msg"""
+        """Parses the response message in self.msg."""
 
         assert self.msg
 
+        msg = bytearray(self.msg)
+
+        if len(msg) < 2:
+            raise GNetException(f"Response message too short: {bytes(msg)!r}")
+
         # Store the response code (?)
-        self.response_code = self.msg[1]
+        self.response_code = msg[1]
         if self.response_code == const.GNET_TIMEOUT:
             raise GNetTimeoutException()
         elif self.response_code != const.GNET_ACK:
             raise GNetException(f"Response code {self.response_code}")
 
-        if self.msg[-1] != const.GNET_TERM:
-            raise GNetException(f"Response message does not end with terminator byte")
+        if len(msg) < 4:
+            raise GNetException(f"Response message too short to contain CRC16: {bytes(msg)!r}")
 
         # Extract the checksum and verify it
-        checksum = int.from_bytes(self.msg[-3:-1], byteorder="big")
-        calculated_checksum = libscrc.gsm16(self.msg[:-3])
+        checksum = int.from_bytes(msg[-2:], byteorder="big")
+        calculated_checksum = libscrc.gsm16(msg[:-2])
         if calculated_checksum != checksum:
             raise GNetException(
                 f"Response checksum ({hex(checksum)}) does not match "
-                f"message payload {bytes(self.msg[:-3])!r} [{hex(calculated_checksum)}]"
+                f"message payload {bytes(msg[:-2])!r} [{hex(calculated_checksum)}]"
             )
 
-        self.response = bytes(self.msg[2:-3])
+        self.response = bytes(msg[2:-2])
