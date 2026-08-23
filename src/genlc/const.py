@@ -91,6 +91,16 @@ GNET_BROADCAST_ADDR: int = 0xFF
 USB_HID_TERM: int = 0x7E
 GNET_MESSAGE_MAX_LENGTH: int = 64
 
+# RS485 bus parameters (direct Gnet bus, as used by the GLM adapter internally)
+RS485_BAUDRATE: int = 250_000
+RS485_BYTESIZE: int = 8
+RS485_PARITY: str = "N"
+RS485_STOPBITS: int = 1
+
+# The RS485 bus uses a different terminator byte ('>') than the USB HID
+# interface ('~', see USB_HID_TERM above)
+RS485_TERM: int = 0x3E
+
 # LED colors
 LED_GREEN = 0
 LED_RED = 1

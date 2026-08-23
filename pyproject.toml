@@ -14,6 +14,7 @@ python = "^3.7"
 hid = "^1.0.4"
 libscrc = "^1.7.1"
 click = "^8.0.1"
+pyserial = "^3.5"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.9.3"
