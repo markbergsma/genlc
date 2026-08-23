@@ -21,6 +21,15 @@ def test_usbtransport_receive(usb_transport):
     # FIXME: extend
 
 
+def test_usbtransport_escape_keeps_payload_terminator():
+    """Tests USBTransport.escape preserves a trailing payload terminator byte"""
+
+    payload = bytearray(b"\x02\x08\x18\x95\x7E")
+    escaped = transport.USBTransport.escape(payload)
+
+    assert escaped == b"\x02\x08\x18\x95\x7D\x5E\x7E"
+
+
 def test_rs485transport_init(mocker):
     """Tests RS485Transport constructor sets up the serial connection"""
 
@@ -51,7 +60,7 @@ def test_rs485transport_send(mocker):
 
 
 def test_rs485transport_send_race(mocker):
-    """Tests RS485Transport.send translates CID_RACE (0xFE) into a native 0x7E byte"""
+    """Tests RS485Transport.send emits CID_RACE as a normal frame"""
 
     mocker.patch("serial.serial_for_url")
     rs485_transport = transport.RS485Transport("socket://127.0.0.1:8899")
@@ -60,9 +69,8 @@ def test_rs485transport_send_race(mocker):
     rs485_transport.send(message)
     sent = rs485_transport._serial.write.call_args[0][0]
 
-    expected = gnet.GNetMessage(const.GNET_BROADCAST_ADDR, const.USB_HID_TERM)
-    assert sent == bytes(expected) + bytes((const.RS485_TERM,))
-    assert const.CID_RACE not in sent[:-3]
+    assert sent[-1] == const.RS485_TERM
+    assert sent == bytes(message) + bytes((const.RS485_TERM,))
 
 
 def test_rs485transport_read(mocker):

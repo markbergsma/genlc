@@ -147,6 +147,9 @@ class GNetResponseMessage:
 
         msg = bytearray(self.msg)
 
+        if len(msg) < 2:
+            raise GNetException(f"Response message too short: {bytes(msg)!r}")
+
         # Store the response code (?)
         self.response_code = msg[1]
         if self.response_code == const.GNET_TIMEOUT:

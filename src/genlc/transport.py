@@ -61,10 +61,8 @@ class USBTransport(BaseTransport):
     def escape(msg: bytearray) -> bytearray:
         """Perform PPP stuffing."""
 
-        if msg and msg[-1] == const.USB_HID_TERM:
-            msg = msg[:-1]
-
-        # The message up to the terminator should be escaped with "PPP stuffing"
+        # The message should be escaped with "PPP stuffing" before the HID
+        # terminator is appended.
         return msg.replace(b"\x7D", b"\x7D\x5D").replace(
             b"\x7E", b"\x7D\x5E"
         ) + bytes([const.USB_HID_TERM])
@@ -154,9 +152,12 @@ class RS485Transport(BaseTransport):
     e.g. "/dev/ttyUSB0" for a local serial port, or "socket://host:port" for a TCP
     proxy.
 
-    Unlike the USB HID transport, the raw RS485 bus does not use PPP byte stuffing,
-    packet prefixing/segmentation, or the CID_RACE command wrapping; it uses a
-    different terminator byte ("\\x3E" instead of "\\x7E").
+    Unlike the USB HID transport, the raw RS485 bus does not use packet
+    prefixing/segmentation. Framing is currently terminated by "\\x3E", but the
+    real on-wire byte-stuffing mechanism is still unknown.
+
+    FIXME: re-sniff the RS485 wire protocol and replace this guessed framing with
+    the actual Genelec bus framing rules.
     """
 
     def __init__(self, url: str, timeout: float = 1.0, **kwargs) -> None:
@@ -200,18 +201,7 @@ class RS485Transport(BaseTransport):
 
         assert message.msg, "Message was not constructed"
 
-        # On the wire, the Gnet frame is terminated with RS485_TERM ("\x3E")
-        # rather than USB_HID_TERM ("\x7E"), and the CID_RACE command is sent
-        # natively as "\x7E" instead of being wrapped as "\xFE".
-        raw = bytes(message)
-
-        if message.command == const.CID_RACE:
-            wire_message = GNetMessage(
-                message.address, const.USB_HID_TERM, message.data
-            )
-            raw = bytes(wire_message)
-
-        payload = raw + bytes((const.RS485_TERM,))
+        payload = bytes(message) + bytes((const.RS485_TERM,))
         self._write(payload)
 
     def receive(self, parse: bool = True) -> GNetResponseMessage:

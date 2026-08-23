@@ -50,3 +50,11 @@ def test_GNetResponseMessage_parse():
     gnrm.msg[1] = const.GNET_TIMEOUT
     with pytest.raises(gnet.GNetTimeoutException):
         gnrm.parse()
+
+
+def test_GNetResponseMessage_parse_short_message():
+    """Tests truncated response frames raise a controlled exception"""
+
+    gnrm = gnet.GNetResponseMessage(bytearray(b"\x01"))
+    with pytest.raises(gnet.GNetException):
+        gnrm.parse()
