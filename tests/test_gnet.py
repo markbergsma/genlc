@@ -16,7 +16,7 @@ def test_GNetMessage_init():
     assert gnet_message.msg is None
 
     gnet_message = gnet.GNetMessage(0x02, 0x08)
-    assert gnet_message.msg == b"\x02\x08\x18\x95\x7E"
+    assert gnet_message.msg == b"\x02\x08\x18\x95"
 
 
 def test_GNetMessage_construct():
@@ -24,11 +24,11 @@ def test_GNetMessage_construct():
 
     gnet_message = gnet.GNetMessage(0x02, 0x08)
     assert gnet_message.checksum == libscrc.gsm16(b"\x02\x08")
-    assert gnet_message.msg == b"\x02\x08\x18\x95\x7E"
+    assert gnet_message.msg == b"\x02\x08\x18\x95"
 
     gnet_message = gnet.GNetMessage(0xFF, 0x04, b"ab")
     assert gnet_message.checksum == libscrc.gsm16(b"\xFF\x04ab")
-    assert gnet_message.msg == b"\xFF\x04ab\x1Cc\x7E"
+    assert gnet_message.msg == b"\xFF\x04ab\x1Cc"
 
 
 def test_GNetResponseMessage_parse():

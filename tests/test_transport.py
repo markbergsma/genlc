@@ -12,6 +12,6 @@ def test_usbtransport_receive(usb_transport):
     ]
     usb_transport.adapter.read.side_effect = segments
     resp = usb_transport.receive(parse=False)
-    assert bytes(resp.msg)[:-3] == payload
+    assert bytes(resp.msg).rstrip(b"\0") == payload
 
     # FIXME: extend

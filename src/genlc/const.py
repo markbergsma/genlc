@@ -88,7 +88,7 @@ GNET_TIMEOUT: int = 0x7E  # FIXME: guesswork
 GNET_MULTICAST_ADDR: int = 0xF0
 GNET_BROADCAST_ADDR: int = 0xFF
 
-GNET_TERM: int = 0x7E
+USB_HID_TERM: int = 0x7E
 GNET_MESSAGE_MAX_LENGTH: int = 64
 
 # LED colors

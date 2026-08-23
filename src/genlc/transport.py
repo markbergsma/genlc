@@ -58,14 +58,15 @@ class USBTransport(BaseTransport):
 
     @staticmethod
     def escape(msg: bytearray) -> bytearray:
-        """Perform PPP stuffing"""
+        """Perform PPP stuffing."""
 
-        assert msg[-1] == const.GNET_TERM
+        if msg and msg[-1] == const.USB_HID_TERM:
+            msg = msg[:-1]
 
         # The message up to the terminator should be escaped with "PPP stuffing"
-        return msg[:-1].replace(b"\x7D", b"\x7D\x5D").replace(
+        return msg.replace(b"\x7D", b"\x7D\x5D").replace(
             b"\x7E", b"\x7D\x5E"
-        ) + bytes([const.GNET_TERM])
+        ) + bytes([const.USB_HID_TERM])
 
     @staticmethod
     def unescape(msg: bytearray) -> bytearray:
@@ -76,12 +77,15 @@ class USBTransport(BaseTransport):
     def _read(self) -> bytearray:
         """
         Reads one or more packets from the underlying transport hid.Device
-        and reassembles them into a single byte string
+        and reassembles them into a single byte string.
+
+        The wire-level terminator is stripped here so that GNetMessage/GNetResponseMessage
+        operate on the normalized payload plus CRC.
         """
 
         segments = []
         while not segments or not segments[-1].rstrip(b"\0").endswith(
-            bytes((const.GNET_TERM,))
+            bytes((const.USB_HID_TERM,))
         ):
             if len(segments) + 1 > self.MAX_SEGMENTS:
                 raise GNetException(
@@ -94,12 +98,14 @@ class USBTransport(BaseTransport):
                 len(segments[-1]) == self.MAX_PACKET_LEN
             ), f"value: {len(segments[-1]), segments}"
 
-        # Join segments together and strip trailing NULL bytes
+        # Join segments together and strip trailing NULL bytes and wire terminator.
         message = bytearray().join(segment[1:] for segment in segments).rstrip(b"\0")
         logger.debug(f"Rcvd: {bytes(message)}")
 
-        # Perform PPP destuffing
+        # Perform PPP destuffing and remove the transport-specific terminator.
         message = self.unescape(message)
+        if message and message[-1] == const.USB_HID_TERM:
+            message = message[:-1]
         return message
 
     def send(self, message: GNetMessage) -> None:
@@ -109,7 +115,8 @@ class USBTransport(BaseTransport):
 
         # TODO: split over multiple 64-byte packets when needed
 
-        # Do PPP stuffing first
+        # Strip any transport-level terminator from the message body, then re-add it
+        # as part of the USB HID framing.
         msg = self.escape(bytes(message))
 
         # Prefix the message with a 0 byte, and 0x80 + len(message)
