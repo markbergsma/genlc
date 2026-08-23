@@ -141,19 +141,11 @@ class GNetResponseMessage:
         self.response: Optional[bytearray] = None
 
     def parse(self) -> None:
-        """Parses the response message in self.msg.
-
-        The underlying transport may add a transport-specific terminator byte on the
-        wire, but the GNet payload itself is the normalized message without the
-        terminator. We therefore accept either a raw payload or a terminated payload
-        and validate the CRC over the payload bytes only.
-        """
+        """Parses the response message in self.msg."""
 
         assert self.msg
 
         msg = bytearray(self.msg)
-        if msg and msg[-1] in (const.USB_HID_TERM, 0x3E):
-            msg = msg[:-1]
 
         # Store the response code (?)
         self.response_code = msg[1]

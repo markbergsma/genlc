@@ -36,12 +36,12 @@ def test_GNetResponseMessage_parse():
 
     gnrm = gnet.GNetResponseMessage()
     payload = bytes(range(59))
-    gnrm.msg = bytearray(b"\x01\x09" + payload + b"\x00\x00\x7E")
+    gnrm.msg = bytearray(b"\x01\x09" + payload + b"\x00\x00")
     with pytest.raises(gnet.GNetException):
         gnrm.parse()
 
-    # Now let's put a correct CRC for bytes(range(64)) and try again
-    gnrm.msg[-3:-1] = b"\x61\xCB"
+    # Now let's put a correct CRC for bytes(range(63)) and try again
+    gnrm.msg[-2:] = b"\x61\xCB"
     gnrm.parse()
     assert gnrm.response_code == const.GNET_ACK
     assert payload == gnrm.response
